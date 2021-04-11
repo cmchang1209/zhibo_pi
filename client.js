@@ -27,7 +27,7 @@ ioClient.on('connect', () => {
     run()
     intervalId = setInterval(() => {
         run()
-    }, 3000)
+    }, 10000)
 })
 
 ioClient.on("disconnect", () => {
