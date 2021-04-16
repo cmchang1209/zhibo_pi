@@ -1,0 +1,60 @@
+ssh ubuntu@xxx.xxx.xxx.xxx
+fidodarts
+ubuntu-20.04.2-preinstalled-server-arm64+raspi.img.xz
+
+FFmpeg
+
+git clone --depth 1 --branch release/4.3 https://github.com/FFmpeg/FFmpeg.git
+
+sudo apt-get update -qq && sudo apt-get -y install autoconf automake build-essential cmake git-core libass-dev libfreetype6-dev libgnutls28-dev libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget yasm zlib1g-dev libunistring-dev libdrm-dev libopus-dev libvpx-dev libwebp-dev libx264-dev libxml2-dev libfdk-aac-dev libmp3lame-dev
+
+cd FFmpeg
+
+./configure \
+  --prefix="$HOME/ffmpeg_build" \
+  --pkg-config-flags="pkg-config --static" \
+  --extra-cflags="-I$HOME/ffmpeg_build/include" \
+  --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
+  --extra-libs="-lpthread -lm" \
+  --bindir="$HOME/bin" \
+  --enable-gpl \
+  --enable-gnutls \
+  --disable-libaom \
+  --enable-libass \
+  --enable-libfdk-aac \
+  --enable-libfreetype \
+  --enable-libmp3lame \
+  --enable-libopus \
+  --enable-libvorbis \
+  --enable-libvpx \
+  --enable-libx264 \
+  --disable-libx265 \
+  --enable-nonfree \
+  --arch=aarch64 \
+  --disable-libxml2 \
+  --enable-libwebp \
+  --enable-libdrm
+  
+make -j4
+  
+cmd
+screen
+/home/ubuntu/FFmpeg/ffmpeg -f v4l2 -framerate 10 -video_size 480x270 -i /dev/video0 -f mpegts -codec:v mpeg1video -r 59.94 -s 320x180 -aspect 16:9 -an -bf 0 -b:v 4M -muxdelay 0.001 http://videostream.fidodarts.com:50100/fidodarts
+
+cam ba
+/home/ubuntu/FFmpeg/ffmpeg -f v4l2 -framerate 20 -video_size 320x240 -i /dev/video4 -f mpegts -codec:v mpeg1video -s 320x240 -b:v 4M -bf 0 -muxdelay 0.001 http://videostream.fidodarts.com:50200/fidodarts
+
+cam people
+/home/ubuntu/FFmpeg/ffmpeg -f v4l2 -framerate 20 -video_size 640x480 -i /dev/video2 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 4M -bf 0 -muxdelay 0.001 http://videostream.fidodarts.com:50300/fidodarts
+
+
+
+sudo apt install v4l-utils
+查看 /dev/video? 格式
+v4l2-ctl --list-formats-ext -d /dev/video?
+
+
+
+
+  
+  
