@@ -6,9 +6,10 @@ FFmpeg
 
 git clone --depth 1 --branch release/4.3 https://github.com/FFmpeg/FFmpeg.git
 
+cd FFmpeg
+
 sudo apt-get update -qq && sudo apt-get -y install autoconf automake build-essential cmake git-core libass-dev libfreetype6-dev libgnutls28-dev libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget yasm zlib1g-dev libunistring-dev libdrm-dev libopus-dev libvpx-dev libwebp-dev libx264-dev libxml2-dev libfdk-aac-dev libmp3lame-dev
 
-cd FFmpeg
 
 ./configure \
   --prefix="$HOME/ffmpeg_build" \
@@ -36,6 +37,14 @@ cd FFmpeg
   --enable-libdrm
   
 make -j4
+
+nano .bashrc
+add
+#export ffmpeg=/home/ubuntu/FFmpeg/ffmpeg
+export PATH=$PATH:<path where you installed ffmpeg>
+export PATH=$PATH:/home/ubuntu/FFmpeg
+
+source .bashrc
   
 cmd
 screen
@@ -47,11 +56,27 @@ cam ba
 cam people
 /home/ubuntu/FFmpeg/ffmpeg -f v4l2 -framerate 20 -video_size 640x480 -i /dev/video2 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 4M -bf 0 -muxdelay 0.001 http://videostream.fidodarts.com:50300/fidodarts
 
+audio
+ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video2 -f alsa -ar 44100 -c 2 -i hw:2 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001 http://videostream.fidodarts.com:50100/fidodarts
+
 
 
 sudo apt install v4l-utils
 查看 /dev/video? 格式
 v4l2-ctl --list-formats-ext -d /dev/video?
+
+查看 audio list
+sudo apt install v4l-utils
+aplay -L
+arecord -l || arecord -L
+
+copy pi ssh private_key for aws 反向代理連線認證
+scp ~/.ssh/private_key.ssh ubuntu@192.168.31.128:/home/ubuntu/.ssh
+ssh登陸之忽略known_hosts文件，修改配置文件“~/.ssh/config”，加上這兩行，重啟服務器
+StrictHostKeyChecking no
+UserKnownHostsFile /dev/null
+列出 service
+service  --status-all
 
 
 
