@@ -1,6 +1,6 @@
 const io = require('socket.io-client')
 const macaddress = require('macaddress')
-const exec = require('child_process').exec
+const { _exec } = require('./cmd')
 
 /* golbal params */
 const minPort = 50000
@@ -9,6 +9,9 @@ const awsPort = 8090
 const awsHost = 'videostream.fidodarts.com'
 const url = `http://${awsHost}:${awsPort}`
 const FFmpegWsd = 'fidodarts'
+
+const screen = ['534d:2109']
+const cam = ['046d:082d']
 //const url = `http://192.168.2.130:${awsPort}`
 
 let myMac = ''
@@ -24,11 +27,11 @@ macaddress.one('eth0', (err, mac) => {
 })
 
 ioClient.on('connect', () => {
-    console.log('connect')
+    console.log('pi connect')
     run()
-    intervalId = setInterval(() => {
-        //run()
-    }, 10000)
+    /*intervalId = setInterval(() => {
+        run()
+    }, 10000)*/
 })
 
 ioClient.on("disconnect", () => {
@@ -36,8 +39,9 @@ ioClient.on("disconnect", () => {
 })
 
 ioClient.on('runFFmpeg', (data) => {
-    var cmd = `lsof -i:${data.port} -t`
-    exec(cmd, (error, stdout, stderr) => {
+    runFFmpeg(data)
+    //var cmd = `lsof -i:${data.port} -t`
+    /*exec(cmd, (error, stdout, stderr) => {
         var pid = stdout * 1
         if (!pid) {
             //var cmd = `ffmpeg ${data.cmd}`
@@ -46,7 +50,7 @@ ioClient.on('runFFmpeg', (data) => {
         } else {
             ioClient.emit('echoPlayImage', { me: data.me, data: { status: true }, indexSid: data.indexSid })
         }
-    })
+    })*/
 
 })
 
@@ -100,27 +104,38 @@ async function runFFmpeg(data) {
 }
 
 async function run() {
-    var data = []
     var cmd = "v4l2-ctl --list-devices"
-    exec(cmd, (error, stdout, stderr) => {
-        var usbList = listUSB(stdout)
-        usbList.map((item, index) => {
-            item.devices.map((uitem, uindex) => {
-                if (uindex === 0) {
-                    var cmd1 = `v4l2-ctl --list-formats-ext -d ${uitem.name}`
-                    exec(cmd1, (error, stdout, stderr) => {
-                        var formats = formatExt(stdout)
-                        uitem.formats.push(formats)
-                        if (index === usbList.length - 1) {
-                            ioClient.emit('run', { mac: myMac, camData: usbList })
-                        }
-                    })
-                } else {
-                    item.devices.splice(uindex, 1)
+    let data = await _exec(cmd)
+    var usbList = listUSB(data)
+    usbList.map(async (item, index) => {
+        item.devices.map(async (uitem, uindex) => {
+            //console.log(parseInt(uitem.name))
+            if (uindex === 0 && (uitem.name === '/dev/video0' || uitem.name === '/dev/video2' || uitem.name === '/dev/video4' || uitem.name === '/dev/video6')) {
+                cmd = `v4l2-ctl --list-formats-ext -d ${uitem.name}`
+                data = await _exec(cmd)
+                var formats = formatExt(data)
+                uitem.formats.push(formats)
+                if (index === usbList.length - 1) {
+                    ioClient.emit('run', { mac: myMac, camData: usbList })
                 }
-            })
+            } else {
+                item.devices.splice(uindex, 1)
+            }
         })
     })
+}
+
+function listUSB1(txt) {
+    let devices = []
+    let lines = txt.split('\n')
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i]
+        screen.map(sitem => {
+
+        })
+
+    }
+    console.log(lines)
 }
 
 function listUSB(txt) {

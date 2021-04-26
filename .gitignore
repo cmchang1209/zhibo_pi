@@ -1,6 +1,6 @@
 /pi
 /FFmpeg
-
+ubuntu-20.04.2-preinstalled-server-arm64+raspi.img.xz
 
 # local env files
 .env.local

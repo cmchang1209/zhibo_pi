@@ -2,8 +2,21 @@ ssh ubuntu@xxx.xxx.xxx.xxx
 fidodarts
 ubuntu-20.04.2-preinstalled-server-arm64+raspi.img.xz
 
+check 權限
+groups
+
+
 FFmpeg
 
+copy FFmpeg /code/zhibo_new/pi/FFmpeg
+cd FFmpeg
+
+sudo apt-get -y install libass-dev libfreetype6-dev libgnutls28-dev libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget yasm zlib1g-dev libunistring-dev libdrm-dev libopus-dev libvpx-dev libwebp-dev libx264-dev libxml2-dev libfdk-aac-dev libmp3lame-dev
+
+
+sudo apt-get update -qq && sudo apt-get -y install autoconf automake build-essential cmake git-core libass-dev libfreetype6-dev libgnutls28-dev libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget yasm zlib1g-dev libunistring-dev libdrm-dev libopus-dev libvpx-dev libwebp-dev libx264-dev libxml2-dev libfdk-aac-dev libmp3lame-dev
+
+or new install
 git clone --depth 1 --branch release/4.3 https://github.com/FFmpeg/FFmpeg.git
 
 cd FFmpeg
@@ -57,26 +70,80 @@ cam people
 /home/ubuntu/FFmpeg/ffmpeg -f v4l2 -framerate 20 -video_size 640x480 -i /dev/video2 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 4M -bf 0 -muxdelay 0.001 http://videostream.fidodarts.com:50300/fidodarts
 
 audio
-ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video2 -f alsa -ar 44100 -c 2 -i hw:2 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001 http://videostream.fidodarts.com:50100/fidodarts
+ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video2 -f alsa -ar 44100 -i hw:2 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 1000k -bf 0 -codec:a mp2 -b:a 128k -muxdelay 0.001 http://videostream.fidodarts.com:50100/fidodarts
 
 
 
-sudo apt install v4l-utils
+sudo apt install -y v4l-utils
 查看 /dev/video? 格式
+v4l2-ctl --list-devices
 v4l2-ctl --list-formats-ext -d /dev/video?
 
 查看 audio list
-sudo apt install v4l-utils
+sudo apt install -y alsa-utils
 aplay -L
 arecord -l || arecord -L
 
-copy pi ssh private_key for aws 反向代理連線認證
-scp ~/.ssh/private_key.ssh ubuntu@192.168.31.128:/home/ubuntu/.ssh
+copy pi ssh id_rsa for aws 反向代理連線認證
+ftp pi?ip pi:raspberry 22
+copy id_rsa && id_rsa.pub
+cd .ssh
+chmod 400 id_rsa
+chmod 400 id_rsa.pub
+
 ssh登陸之忽略known_hosts文件，修改配置文件“~/.ssh/config”，加上這兩行，重啟服務器
 StrictHostKeyChecking no
 UserKnownHostsFile /dev/null
 列出 service
 service  --status-all
+
+install node
+sudo apt-get update && sudo apt-get upgrade -y
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+sudo apt-get install nodejs -y
+node -v
+npm -v
+
+查尋port 對應 pid
+lsof 
+sudo apt-get install -y lsof
+
+mkdir zhibo
+cd zhibo
+npm init
+npm install socket.io-client@3.1.1
+npm install --save macaddress
+npm install --save child_process
+copy zhibo_new/pi/client.js && zhibo_new/pi/cmd.js to zhibo
+
+查看網路內device資訊
+sudo arp-scan --localnet
+
+自動啟動 zhibo/index.js
+cd /home/ubuntu/zhibo/index.js
+chmod 777 index.js
+sudo nano /etc/systemd/system/zhibo.service
+
+[Unit]
+Description=Zhibo App
+
+[Service]
+ExecStart=/home/ubuntu/zhibo/index.js
+Restart=always
+User=ubuntu
+# Note Debian/Ubuntu uses 'nogroup', RHEL/Fedora uses 'nobody'
+Group=ubuntu
+Environment=PATH=/usr/bin:/usr/local/bin:/home/ubuntu/zhibo/node_modules:/home/ubuntu/FFmpeg
+Environment=NODE_ENV=production
+WorkingDirectory=/home/ubuntu/zhibo
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl enable zhibo.service
+
+如果有修改，執行
+sudo systemctl daemon-reload
 
 
 
